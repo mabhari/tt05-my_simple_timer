@@ -11,50 +11,62 @@ module tt_um_seven_segment_seconds #( parameter MAX_COUNT = 24'd10_000_000 ) (
     input  wire       rst_n     // reset_n - low to reset
 );
 
-    wire reset = ! rst_n;
+
+/* ---------------------------------------------------------------- 
+This is a two-digits timer, which can count from 00 to 99 in seconds. The time to stop counting is 
+given through 8 input switches (ui_in) as two BCD numbers (which can be from 00 to 99). This number 
+is loaded into an internal register when input Load is '1'. Then when input Start is '1' the counting
+begins. The timer stops when it reaches the specified count number and then output Time_Out will become '1'.  
+------------------------------------------------------------------- */
+
+
+    
+    // ------- From the example code (or based on that) --------
     wire [6:0] led_out;
     assign uo_out[6:0] = led_out;
     assign uo_out[7] = 1'b0;
+	// ---------------------------------------------------------
 
-    // use bidirectionals as outputs
-    assign uio_oe = 8'b11111111;
+    // set bidirectionals as inputs or outputs properly as described below 
+    assign uio_oe = 8'b11110000;
+	assign uio_out[6:0] = 7'b0000000;   // Unused outputs
 
-    // put bottom 8 bits of second counter out on the bidirectional gpio
-    assign uio_out = second_counter[7:0];
-
-    // external clock is 10MHz, so need 24 bit counter
-    reg [23:0] second_counter;
-    reg [3:0] digit;
-
-    // if external inputs are set then use that as compare count
-    // otherwise use the hard coded MAX_COUNT
-    wire [23:0] compare = ui_in == 0 ? MAX_COUNT: {6'b0, ui_in[7:0], 10'b0};
-
-    always @(posedge clk) begin
-        // if reset, set counter to 0
-        if (reset) begin
-            second_counter <= 0;
-            digit <= 0;
-        end else begin
-            // if up to 16e6
-            if (second_counter == compare) begin
-                // reset
-                second_counter <= 0;
-
-                // increment digit
-                digit <= digit + 1'b1;
-
-                // only count from 0 to 9
-                if (digit == 9)
-                    digit <= 0;
-
-            end else
-                // increment counter
-                second_counter <= second_counter + 1'b1;
-        end
-    end
-
-    // instantiate segment display
-    seg7 seg7(.counter(digit), .segments(led_out));
+    wire S_Reset = ! rst_n;
+	wire Timer_Clk; 
+	wire [3:0] Sec_Ones, Sec_Tens;
+        reg [3:0] Number;
+	
+	Clk_Divider c_divider (.Clk_In(clk), .Reset(S_Reset), .Clk_Out(Timer_Clk));
+	
+	// input ui_in provides the timer value as two BCD numbers for the seconds (from 00 to 99)
+	// input uio_in[0] is used for Start and uio_in[1] is used for Load
+	// output uio_out[7] is used for Time_Out
+	
+	// For the following two lines I assumed the design is enabled to work if ena is '1'
+	wire S_Start = uio_in[0] & ena; 
+	wire S_Load = uio_in[1] & ena; 
+	
+	//
+	Seconds_Timer s_timer (.Clock(Timer_Clk), .Reset(S_Reset), .Start(S_Start), .Load(S_Load),
+                           .Timer_In_Value(ui_in),
+                           .Time_Out(uio_out[7]),
+                           .Sec1(Sec_Tens), .Sec0(Sec_Ones)); 	 
+   
+    
+	
+	// input uio_in[3] selects which number (Sec_Tens or Sec_Ones) is displayed on 7-Seg. 
+	// When it is 0, Sec_Ones is diplayed otherwise, Sec_Ones is displayed on 7-Seg.  
+	always @(uio_in[3], Sec_Ones, Sec_Tens)
+	begin 
+	   if (uio_in[3]) 
+	      Number = Sec_Tens;
+	   else 
+	      Number = Sec_Ones;
+	end 
+	
+	
+	// BCD number to be displaed on 7-Segment display
+	// seg is used from the example code 
+    seg7 seg7(.counter(Number), .segments(led_out));
 
 endmodule
