@@ -36,7 +36,7 @@ begins. The timer stops when it reaches the specified count number and then outp
 	wire [3:0] Sec_Ones, Sec_Tens;
         reg [3:0] Number;
 	
-	Clk_Divider c_divider (.Clk_In(clk), .Reset(S_Reset), .Clk_Out(Timer_Clk));
+	Clock_Divider c_divider (.Clk_In(clk), .Reset(S_Reset), .Clk_Out(Timer_Clk));
 	
 	// input ui_in provides the timer value as two BCD numbers for the seconds (from 00 to 99)
 	// input uio_in[0] is used for Start and uio_in[1] is used for Load
