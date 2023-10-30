@@ -1,4 +1,4 @@
-// This is taken from https://github.com/TinyTapeout/tt05-verilog-demo/blob/main/src/test.py
+# This is taken from https://github.com/TinyTapeout/tt05-verilog-demo/blob/main/src/test.py
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
