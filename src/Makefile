@@ -1,4 +1,4 @@
-// This is taken from https://github.com/TinyTapeout/tt05-verilog-demo/blob/main/src/Makefile
+# This is taken from https://github.com/TinyTapeout/tt05-verilog-demo/blob/main/src/Makefile
 # Makefile
 # See https://docs.cocotb.org/en/stable/quickstart.html for more info
 
